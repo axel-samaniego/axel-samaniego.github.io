@@ -1,0 +1,81 @@
+from requests_html import HTMLSession, AsyncHTMLSession
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import bs4
+from bs4 import BeautifulSoup as soup
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler,MinMaxScaler,PowerTransformer
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import warnings
+from sklearn.metrics import mean_absolute_error, mean_squared_error,r2_score
+warnings.filterwarnings('ignore')
+%matplotlib inline
+sns.set_style('darkgrid')
+
+def get_df():
+  df3 = pd.DataFrame()
+  j = 0
+  for i in np.linspace(0,9870,283):
+      hc_url = f'https://www.hendrickcars.com/used-inventory/index.htm?start={int(i)}'
+      s = AsyncHTMLSession()
+      r = await s.get(hc_url)
+      #print (r.status_code)
+      r.html.arender(sleep=1)
+      print(r.status_code)
+      page_soup = soup(r.text,'html.parser')
+      cars = page_soup.find_all('li',{'class':'item hproduct clearfix d-flex flex-column justify-content-between border border-light bg-white used primary'})
+      print(i)
+      print(len(cars))
+      for car in cars:
+          print(j) 
+          print(i)
+          df3.loc[j,'make'] = car['data-make']
+          df3.loc[j,'model'] = car['data-model']
+          df3.loc[j,'bodystyle'] = car['data-bodystyle']
+          df3.loc[j,'drivetrain'] = car['data-driveline']
+          df3.loc[j,'engine'] = car['data-engine']
+          df3.loc[j,'citympg'] = car['data-cityfueleconomy']
+          df3.loc[j,'hwympg'] = car['data-highwayfueleconomy']
+          df3.loc[j,'year'] = car['data-year']
+          df3.loc[j,'transmission'] = car['data-transmission']
+          df3.loc[j,'int color'] = car['data-interiorcolor']
+          df3.loc[j,'ext color'] = car['data-exteriorcolor']
+          df3.loc[j,'fueltype ']= car['data-fueltype']
+          df3.loc[j, 'mileage'] = car['data-odometer']
+          df3.loc[j,'vin'] = car['data-vin']
+          df3.loc[j,'price'] = car['data-internetprice'].split('.')[0]
+          j+=1
+  return df3 
+df3 = get_df() 
+
+#turn strings from website to int
+df3['engine'] = df3['engine'].astype(int)
+df3['citympg'] = df3['citympg'].astype(int)
+df3['hwympg'] = df3['hwympg'].astype(int)
+df3['mileage'] = df3['mileage'].astype(int)
+df3['year'] = df3['year'].astype(int)
+df3['price'] = df3['price'].astype(int)
+
+#Removes outliers, price, citympg, hwympg and the age upperbound is anything above 1.5*IQR+3Q. Then got cars above age 0.
+df_no_out = df3[(df3['price']<=63318)&(df3['citympg']<=33)&(df3['hwympg']<=46.5)&(df3['mileage']<=110797)&(df3['car age']<=10)&(df3['car age']>=1)]
+
+#Classified cars into groups based on make
+df_no_out['car_class'] = df_no_out['make'].map({'Mercedes-Benz':'luxury',
+                                       'Volkswagen':'non-lux','Acura':'luxury',
+                                       'Honda':'non-lux','Toyota':'non-lux',
+                                       'Audi':'luxury','Nissan':'non-lux',
+                                       'Ford':'non-lux','BMW':'luxury','GMC':'luxury',
+                                       'Subaru':'non-lux','Jeep':'non-lux','Buick':'luxury',
+                                       'Mazda':'non-lux','Hyundai':'non-lux','Kia':'non-lux',
+                                       'Chevrolet':'non-lux','Dodge':'non-lux','LEXUS':'luxury',
+                                       'Alfa Romeo':'luxury','Porsche':'super-lux',
+                                       'Chrysler':'luxury','Cadillac':'luxury',
+                                       'INFINITI':'luxury','Jaguar':'super-lux',
+                                       'Land Rover':'luxury','Lincoln':'luxury',
+                                       'Mitsubishi':'non-lux','Scion':'non-lux','Maserati':'super-lux',
+                                       'CADILLAC':'luxury','Genesis':'luxury','MINI':'luxury'
+                                       ,'FIAT':'non-lux'})
