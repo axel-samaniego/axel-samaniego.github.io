@@ -1,0 +1,87 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+%matplotlib inline
+sns.set_style('darkgrid')
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler,MinMaxScaler,PowerTransformer
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import warnings
+from sklearn.metrics import mean_absolute_error, mean_squared_error,r2_score
+warnings.filterwarnings('ignore')
+
+df = pd.read_csv('cleaned cars.csv')
+
+#plotted age to price on scatterplot, and see how they differed by car class
+plt.figure(figsize=(12,6))
+sns.scatterplot(df['car age'],df['price'],hue=df['car_class'])
+
+#Noticed Corvettes were not depreciating like other vehicles so I decided to remove them
+cv_ind = list(df[df['model']=='Corvette'].index)
+df = df.drop(index=cv_ind)
+
+#Plot mileage to price and see how they differed by car class
+plt.figure(figsize=(12,6))
+sns.scatterplot(df['mileage'],df['price'],hue=df['car_class'])
+
+#Plot mileage to the log of price and see how they differed by car class; relationship looks a lot more linear this way
+plt.figure(figsize=(12,6))
+sns.scatterplot(df['mileage'],np.log(df['price']),hue=df['car_class'])
+
+#Decided to remove cars with mileage below 1200 as those may be cars that did not have any previous owner
+df = df[(df['mileage']>1200)]
+
+#Drivetrain to price boxplot
+plt.figure(figsize=(12,6))
+sns.boxplot(df['drivetrain'],df['price'])
+
+#Group redundant fueltypes together
+df['fueltype '] = df['fueltype '].replace({'Diesel':'Diesel Fuel',
+                                          'Regular Unleaded':'Gasoline Fuel','Premium Unleaded':'Gasoline Fuel',
+                                          'Gas':'Gasoline Fuel'})
+#Fueltype to price boxplot                                          
+plt.figure(figsize=(12,6))
+sns.boxplot(df['fueltype '],df['price'])
+
+#Engine cylinder amount to price boxplot
+plt.figure(figsize=(12,6))
+sns.boxplot(df['engine'],df['price'])
+
+#Created new column with engine cylinders as categories
+df['engine_cat'] = df['engine'].map({3:'3 cyl',4:'4 cyl',5:'5 cyl',
+                                    6:'6 cyl',8:'8 cyl'})
+                                    
+#Created dummy variables for fueltype, drivetrain, and engine cylinders. then made two separate DataFrames to test on engine cylinders as category separately                                  
+dummies = pd.get_dummies(df[['fueltype ','drivetrain']],drop_first=True)
+engine_cat_dum = pd.get_dummies(df['engine_cat'],drop_first=True)
+df_no_engine_cat = pd.concat([df.select_dtypes(exclude=object),dummies],axis=1)
+df_w_engine_cat = pd.concat([df.select_dtypes(exclude=object).drop('engine',axis=1),dummies,engine_cat_dum],axis=1)
+
+#Created method to run regression and be able to change predictors as needed 
+def linear_model(df,predictors,target):
+    X = df[predictors]
+    y = np.log(df[target])
+    X_c = sm.add_constant(X)
+    lr = sm.OLS(y,X_c).fit()
+    print(lr.summary())
+    
+    
+    vif = pd.DataFrame()
+    vif['features'] = X.columns
+    vif['VIF'] = [variance_inflation_factor(X.values, i) for i in range (X.shape[1])]
+    vif['VIF'] = round(vif['VIF'],2)
+    print(vif.sort_values('VIF',ascending=False))
+ 
+#original model
+predictors = list(df_no_engine_cat.drop('price',axis=1).columns)
+target = 'price'
+linear_model(df_no_engine_cat,predictors,target)
+
+#New model removing certain predictors deemed redundant or non-significant
+predictors = list(df_no_engine_cat.drop('price',axis=1).drop(['fueltype _Hybrid Fuel','year','drivetrain_4x2'
+                                                             ,'citympg'],axis=1).columns)
+target = 'price'
+linear_model(df_no_engine_cat,predictors,target)
