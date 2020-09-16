@@ -60,6 +60,12 @@ df3['mileage'] = df3['mileage'].astype(int)
 df3['year'] = df3['year'].astype(int)
 df3['price'] = df3['price'].astype(int)
 
+
+#Checked for diplicated VINs and then searched up the results to select the best posting as there were multiple postings for some VINs
+df3[df3.duplicated('vin')==True]
+
+df_backup = df3 #created backup DataFrame in case of messing up current DataFrame in some way
+
 #Removes outliers, price, citympg, hwympg and the age upperbound is anything above 1.5*IQR+3Q. Then got cars above age 0.
 df_no_out = df3[(df3['price']<=63318)&(df3['citympg']<=33)&(df3['hwympg']<=46.5)&(df3['mileage']<=110797)&(df3['car age']<=10)&(df3['car age']>=1)]
 
@@ -79,3 +85,7 @@ df_no_out['car_class'] = df_no_out['make'].map({'Mercedes-Benz':'luxury',
                                        'Mitsubishi':'non-lux','Scion':'non-lux','Maserati':'super-lux',
                                        'CADILLAC':'luxury','Genesis':'luxury','MINI':'luxury'
                                        ,'FIAT':'non-lux'})
+
+#Saved csv files of the DataFrames to do analysis on another page
+df_backup.to_csv('uncleaned cars.csv')
+df_no_out.to_csv('cleaned cars.csv')
