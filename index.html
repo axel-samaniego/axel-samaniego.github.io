@@ -15,20 +15,64 @@
             height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
+            position: relative;
         }
+        
+        .container {
+            position: relative;
+            width: 440px; /* Increased size for better spacing */
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
         .enter-link {
-            font-size: 24px;
+            font-size: 56px; /* Increased font size */
             font-weight: bold;
             text-decoration: none;
             color: black;
             background-color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 15px 60px; /* Bigger button */
+            border-radius: 12px;
+            box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2; /* Ensures button stays above images */
         }
+
+        .image {
+            position: absolute;
+            width: 200px; /* Increased size */
+            height: auto;
+        }
+
+        /* Positioning images around the button */
+        .img1 { 
+            top: -120px; 
+            left: -10%; 
+            transform: rotate(-60deg); /* Slight tilt */
+        } 
+        .img2 { 
+            top: -150px; 
+            left: 50%; 
+            transform: translateX(-50%);
+        } 
+        .img3 { 
+            top: -95px; 
+            right: -5%; 
+            transform: rotate(30deg); /* Slight tilt */
+        } 
+
     </style>
 </head>
 <body>
-    <a href="https://axel-samaniego.github.io/connections-game/" class="enter-link">Enter</a>
+    <div class="container">
+        
+        <img src="cats/cutie.png" class="image img2">
+        <img src="cats/begging.png" class="image img1">
+        <img src="cats/smiley.PNG" class="image img3">
+        <a href="/connections-game/" class="enter-link">Enter</a>
+    </div>
 </body>
 </html>
