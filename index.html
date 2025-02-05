@@ -63,6 +63,31 @@
             right: -5%; 
             transform: rotate(30deg); /* Slight tilt */
         } 
+        /* Mobile-specific styles */
+        @media (max-width: 600px) {
+            .container {
+                width: 90vw;
+                max-width: 250px;
+            }
+
+            .enter-link {
+                font-size: 6vw; /* Bigger text on small screens */
+                padding: 5vw 10vw;
+            }
+
+            .image {
+                width: 22vw; /* Slightly bigger images */
+                max-width: 90px; 
+            }
+
+            .img1, .img3 {
+                top: -20%;
+            }
+
+            .img2 {
+                top: -35%;
+            }
+        }
 
     </style>
 </head>
